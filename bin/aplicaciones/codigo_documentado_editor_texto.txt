@@ -1,0 +1,162 @@
+//DOCUMENTACION SOBRE EL BLOC DE JORGE//
+
+Aqui explicare los metodos usados y como funciona cada uno, si no hay un
+metodo global explicare exclusivamente las funciones usadas que no requieran
+de su propio metodo reutilizable.
+
+
+
+//METODO EXIST()//
+
+Este metodo me comprueba si el objeto de mi textArea existe, lo utilizo como	
+metodo externo para ser llamado por otras clases y saber si he creado ya el
+editor de texto y evitar duplicaciones.
+
+
+
+//METODO GUARDARARCHIVO()//
+
+Este metodo me abre un JFileChooser con un filtro de solo documentos de texto.
+Antes de guardar o no, se pone el nombre por defecto o el que haya especificado
+antes el usuario, tambien permite cambiar el nombre en la ventana emergente.
+Si acepta guardarlo, guardo en la variable 'arc' (linea 155), la ruta del
+documento de donde ha seleccionado el usuario de guardar lo.
+
+Despues, creo una clase File con la ruta anterior y en el caso de que ya 
+exista dicho documento en esa ruta, pregunto al usuario que quiere hacer;
+Sobreescribir, Renombrarlo o Cancelar. 
+
+Si sobreescribe, simplemente uso FileWriter con el constructor usando 'false'
+y asi no conserva el texto anterior, si renombra pide un nombre nuevo al usuario
+y comprueba que ese nombre tampoco exista en esa ruta y no deja salir al usuario
+hasta que introduzca un nombre que no pertenezca a esa ruta y si cancela, solo
+se cierra la ventana de guardado y vuelve al TextArea con lo que haya escrito.
+
+Si el documento no existe en esa ruta, lo guarda directamente.
+
+
+
+//METODO ABRIRARCHIVO()//
+
+Al empezar a ejecutar este metodo se inicia la comprobacion de si hay algo escrito 
+en el documento y no esta guardado, si es asi borra lo que haya escrito.
+
+Abre un FileChooser con el filtro de 'txt' y si el usuario selecciona un
+documento compatible, guardo la ruta de ese documento y se lo asigno a un
+File para escanearlo posteriormente con un Scanner. En el Scanner, hago
+un bucle while que itera hasta que no exista otra linea de texto en el 
+documento, dentro de este bucle concatena cada linea encontrada del texto.
+
+Al acabar la carga del archivo, actualiza la barra de estado con la nueva 
+informacion y el documento al haber sido abierto significa que tambien
+ha sido guardado y asi lo muestra, en el caso de que se modifique el documento,
+lo identifica como un documento no guardado y tambien se muestra.
+
+Si hay algo cambiado o escrito en el documento, antes de proceder a abrir,
+pregunta al usuario si quiere; Guardarlo, No guardarlo o Cancelar. Si se 
+quiere guardar invoca al metodo GUARDAR(), sino simplemente borra lo que haya
+en el TextArea y si cancela se para el metodo ABRIRARCHIVO().
+
+
+
+//METODO CONFIRMARSALIR()//
+
+Este metodo se ejecuta cuando el usuario quiere cerrar la aplicacion. 
+Si hay cambios de un documento guardado o texto nuevo en el TextArea,
+pregunta al usuario si quiere; Guardar, No guardar o Cancelar.
+Si guarda, ejecuta el metodo GUARDARARCHIVO(), si no quiere guardar se cierra
+la aplicacion y si cancela se para el metodo CONFIRMARSALIR().
+
+
+
+//METODO CREARJMENU//
+
+Con este metodo cargo los componentes del menu junto a sus acciones al ser
+pinchados.
+
+En este metodo existen los siguientes sub-procesos:
+	-//NUEVO//:
+			Abre un nuevo editor de texto vacio comprobando antes si hay
+			cambios de texto o nuevo texto añadido para preguntar al usuario
+			que quiere hacer con el.
+	
+	-//ABRIR//
+			Ejecuta el metodo ABRIRARCHIVO.
+			
+	-//GUARDARCOMO//
+			Ejecuta el metodo GUARDARARCHIVO.
+			
+	-//SALIR//
+			Ejecuta el metodo CONFIRMARSALIR.
+			
+	-//DESHACER//
+			Llama a la clase UndoManager la cual registra que cambios se
+			pueden deshacer y los deshace si es posible.
+			
+	-//REHACER//
+			Llama a la clase UndoManager la cual registra que cambios se
+			pueden rehacer y los rehace si es posible.
+			
+	-//CORTAR//
+			Recoge el texto seleccionado del TextArea y lo quita de la misma
+			para guardarlo en una variable para su posterior uso.
+			Tambien activa el sub-proceso PEGAR.
+			
+	-//COPIAR//
+			Es identico al sub-proceso CORTAR con la diferencia de que no
+			elimina al texto seleccionado del textArea.
+			
+	-//PEGAR//
+			Solo se activa si hay texto disponible para la accion.
+			Al usarlo recoge la posicion del raton en el TextArea usando
+			getCaretPosition() y concatena el texto disponible en esa 
+			posicion.
+			
+	-//BUSCAR//
+			Abre un menu que permite buscar palabras en el documento de texto
+			junto a la opcion de reemplazar la palabra buscada por lo que
+			el usuario desee.
+			
+	-//SELECCIONARTODO//
+			Selecciona todo el texto del TextArea.
+			
+	-//FUENTE//
+			Abre un menu que permite seleccionar el estilo, familia y tamaño
+			de fuente del texto del TextArea al usuario.
+	
+	-//COLOR//
+			Permite al usuario seleccionar el color del texto del TextArea
+			mediante un ColorChooser.
+			
+	-//BARRADEESTADO//
+			Muestra/Oculta la barra de estado la cual muestra informacion como
+			la linea y columna donde se encuentra el cursor de escritura, la 
+			codificacion del archivo y si el documento esta guardado.
+			
+	-//CARACTERESESPECIALES//
+			Muestra/Oculta un panel de caracteres especiales para que el usuario
+			seleccione el que quiera y se concatene donde este el cursor de 
+			escritura.
+	
+	-//AYUDA// 		
+			Comprueba cambios en el documento y de no tener, abre este documento
+			en el TextArea.
+			
+	-//CARGARBARRAESTADO//
+			Carga la barra de estado con la informacion descrita anteriormente.
+			
+	-//CARGARFUENTES//
+			Carga las opciones de fuentes descritas anteriormente.
+			
+	-//CARGARBUSCAR//	
+			Carga el menu de busqueda/reemplazar descrito anteriormente.
+			
+//METODO PADRE//
+
+El metodo principal el cual llama a los metodos necesarios.
+Uso las clases Toolkit y Dimension para poner un tamaño minimo a la ventana
+de la aplicacion.
+
+
+
+

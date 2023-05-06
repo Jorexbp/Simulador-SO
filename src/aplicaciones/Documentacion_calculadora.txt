@@ -1,0 +1,54 @@
+//DOCUMENTACION DE LA CALCULADORA DE JORGE//
+
+A continuacion se encuentra la explicacion de como funciona y los
+metodos empleados
+
+
+
+//METODO EJECUTAR//
+
+Este metodo identifica la operacion a realizar y dependiendo del operador
+que encuentre, realiza una suma, resta, division o multiplicaion.
+
+Una vez calculado lo muestra en la ventana de resultado.
+
+Su funcionamiento se basa en el guardado de digitos encontrados a la izquierda
+y derecha del operador, guardando cada uno en variables distintas y dependiendo
+del operador cambia la formula.
+
+
+
+//FORMATEO//
+
+No es un metodo como tal pero afecta a todos los metodos.
+
+Recoge el valor del Slider en la parte inferior para formatear la salida
+del resultado. Dependiendo del valor escogido, muestra una precision
+decimal distinta.
+
+//BOTONES DE USO//
+
+Aqui identifico a los botones que NO son los operadores; +,-,/ o *.
+
+		-//CE//
+			Borra el resultado y lo que se haya escrito en la calculadora
+			
+		-//C//
+			Borra el ultimo digito u operador introducido.
+			
+		-//1/X//
+			Divide 1 por el numero introducido.
+			
+		-//x^2//
+			Eleva al cuadrado el numero introducido.
+			
+		-//√//
+			Calcula la raiz cuadrada del numero introducido.
+			
+		-// +/- //
+			Cambia el signo del numero/s introducido/s.
+			
+		-//=//
+			Ejecuta la operacion.
+		
+		
