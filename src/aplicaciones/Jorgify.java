@@ -34,12 +34,14 @@ import java.awt.event.WindowEvent;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import java.awt.Color;
 import java.awt.Toolkit;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 
 public class Jorgify extends JFrame {
 
@@ -84,7 +86,7 @@ public class Jorgify extends JFrame {
 						Jorgify frame = new Jorgify();
 						frame.setVisible(true);
 					} catch (Exception e) {
-						
+
 					}
 				}
 			});
@@ -130,18 +132,25 @@ public class Jorgify extends JFrame {
 
 							int posi = tabla.getRowCount() + 1;
 							registro = new Object[3];
-							registro[0] = posi;
+							if (posi == 1) {
+								registro[0] = "En curso";
+
+							} else {
+								registro[0] = posi;
+
+							}
 							registro[1] = nombre;
 							registro[2] = tiempo;
 
 							modelo.addRow(registro);
 							modelo.fireTableStructureChanged();
 							iniciarMusica(lista_cola.toString().substring(1, path.length() + 1));
+
 						}
-						
+
 					});
 				} catch (Exception e) {
-					
+
 				}
 			}
 		}
@@ -152,6 +161,7 @@ public class Jorgify extends JFrame {
 		try {
 			String path = lista_cola.getFirst();
 			iniciarMusica(lista_cola.toString().substring(1, path.length() + 1));
+			tabla.setValueAt("En curso", 0, 0);
 		} catch (Exception e) {
 			timeSlider.setValue(0);
 		}
@@ -159,6 +169,11 @@ public class Jorgify extends JFrame {
 
 	private void iniciarMusica(String mp3) {
 		try {
+			DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
+			tcr.setHorizontalAlignment(SwingConstants.CENTER);
+			for (int i = 0; i < tabla.getColumnCount(); i++) {
+				tabla.getColumnModel().getColumn(i).setCellRenderer(tcr);
+			}
 			hit = new Media(new File(mp3).toURI().toString());
 			mediaPlayer = new MediaPlayer(hit);
 			mediaPlayer.play();
@@ -217,31 +232,40 @@ public class Jorgify extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				mediaPlayer.stop();
-				dispose();// Si se quiere cerrar que pregunte antes y compruebe
+				try {
+					mediaPlayer.stop();
+					dispose();
+				} catch (Exception f) {
+					dispose();
+				}
+
+				// Si se quiere cerrar que pregunte antes y compruebe
 
 			}
 		});
-		
-
 
 		setBounds(100, 100, 450, 324);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(99, 156, 108));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		try {
-			Platform.startup(null);// Si quito esto no se inicia el sonido y si no lo quito sale un error que no se
-		} catch (Exception e) {
-			// puede hacer catch
-		}
+		Runnable runme = new Runnable() {
 
+			@Override
+			public void run() {
+				
+			}
+			
+		};
+			try {	Platform.startup(runme);// Si quito esto no se inicia el sonido y si no lo quito sale un error que no se
+			}catch(Exception m) {
+				
+			}
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		bIniciar.setFont(new Font("Dialog", Font.BOLD, 12));
 		bIniciar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-
 					String ruta = "";
 					archivo = new JFileChooser();
 					archivo.setCurrentDirectory(new File(".")); // Elegimos directorio a abrir
@@ -250,21 +274,23 @@ public class Jorgify extends JFrame {
 					archivo.setFileFilter(filtro1);
 					int r = archivo.showOpenDialog(null); // Opciones del cuadro de diálogo
 					if (r == JFileChooser.APPROVE_OPTION) { // Si se Abre
+						nom = archivo.getSelectedFile().getName().replace(".mp3", "");
+						bstop.setEnabled(true);
+						b_reini.setEnabled(true);
+						b_sigui.setEnabled(true);
 						ruta = archivo.getSelectedFile().getPath();
+						anadirCola(nom, ruta);
+						vol.setEnabled(true);
+						mediaPlayer.setVolume(Double.parseDouble((vol.getValue()).toString()) / 100);
 					} else if (r == JFileChooser.CANCEL_OPTION) { // Si se cancela
 						JOptionPane.showMessageDialog(null, "Ha cancelado su selección");
 					} else {
 						JOptionPane.showMessageDialog(null, "Error en la selección");
 					}
 
-					nom = archivo.getSelectedFile().getName().replace(".mp3", "");
-					bstop.setEnabled(true);
-					b_reini.setEnabled(true);
-					b_sigui.setEnabled(true);
+					
 
-					anadirCola(nom, ruta);
-					vol.setEnabled(true);
-					mediaPlayer.setVolume(Double.parseDouble((vol.getValue()).toString()) / 100);
+					
 
 				} catch (Exception f) {
 					// CANCELADO
@@ -399,6 +425,12 @@ public class Jorgify extends JFrame {
 		modelo = new DefaultTableModel(null, columnas);
 		tabla.setModel(modelo);
 		scroll.setViewportView(tabla);
+
+		DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
+		tcr.setHorizontalAlignment(SwingConstants.CENTER);
+		for (int i = 0; i < tabla.getColumnCount(); i++) {
+			tabla.getColumnModel().getColumn(i).setCellRenderer(tcr);
+		}
 
 		lblNewLabel = new JLabel("Canción:");
 		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, 12));

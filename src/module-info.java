@@ -10,11 +10,21 @@ module Sistema_Operativo {
 	requires java.sql;
 	requires com.formdev.flatlaf;
 	requires java.datatransfer;
-	requires javafx.media;
-	requires javafx.controls;
-	requires javafx.graphics;
-	requires javafx.base;
+
+    requires javafx.graphics;
+    requires javafx.controls;
+    requires javafx.media;
+    requires javafx.base;
+    requires javafx.web;
+    requires javafx.swing;
+    requires javafx.fxml;
 	requires java.scripting;
 	requires JPlanner;
 	requires jcalendar;
+	requires jcommon;
+	requires poi.ooxml;
+	requires poi;
+	requires java.logging;
+	requires SIE;
+	requires jfreechart;
 }

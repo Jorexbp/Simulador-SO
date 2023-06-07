@@ -14,7 +14,7 @@ public class Gestor_Conexion {
 	public Gestor_Conexion() {
 		try {
 
-			File docu = new File("src/conexion/Gestor_Hoteles.accdb");
+			File docu = new File("Gestor_Hoteles.accdb");
 
 			String rutafile = docu.getAbsolutePath();
 			String Url = "jdbc:ucanaccess://" + rutafile;

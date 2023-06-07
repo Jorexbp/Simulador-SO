@@ -1,0 +1,98 @@
+//////DOCUMENTACIÓN DEL GESTOR DE JORGELES//////
+
+En este documento se encuentra la explicación de qué métodos he empleado y cómo los he utilizado para las funcionalidades mostradas. En el caso de que no sea un método independiente, se indicará en el elemento correspondiente.
+
+
+///MÉTODOS///
+
+	-crearColumnas()
+
+		Simplemente añade las columnas al modelo y este modelo se añade a la tabla principal.
+	
+	-insertarRegis(String[][])
+		
+		Este método tiene acceso a la BBDD para poder crear un 	registro, para ello instancio mi clase conexión explicada más adelante junto a la 			instanciación de la clase Connection para crear una conexión a mi BBDD.
+		
+		Realizo la query de SQL en un String para su posterior ejeccución, en este caso es una query Insert.
+		
+		Utilizo la clase PreparedStatement para preparar la query para su ejección. Mediante un for loop accedo a mi array de dos dimensiones pasado 		como parámetro, este array se compone exlusivamente de datos en un orden específico.
+
+		Una vez haya extraído los datos los añado al PreparedStatement y ejecuto la query de actualización. Si esta query ha sido completada con 			éxito, incrementa el valor de mi variable contadora n, siendo un uso exacto del %ROWCOUNT de SQL.
+
+		Cuando se haya o no insertado el registro, la conexión con la BBDD se cierra para evitar brechas de seguridad.
+
+
+	-imprimirJTable(JTable,String,String)
+		
+		Este método genera un documento Docx con los datos de la tabla junto a los grafos de la misma con mensajes indicando el campo más común en 			cada grafo.
+	
+		Abunda la creación de párrafos usando la clase XWPFDocument para poder dividir los elementos de el documento. Empleo la clase Calendar para 			indicar en que fecha exacta se generó el documento. 
+		
+		Creo la tabla dentro del documento word con un for loop anidado y así extraigo los valores y en otro for loop los nombres de las columnas, 			quedando así como dinámico, si cambia la tabla el documento cambiará conjuntamente si se genera de nuevo.
+
+		Ahora lo que yo creo que es más interesante, para poder añadir los grafos a el documento tuve que llamar al método crearGrafo(), el cual me 			devuelve un String[][] y lo paso como parámetro a el constructor de la clase Grafo de el paquete de Java, no devuelve nada como es esperado 			y llamo al método de la clase Grafo convertirImagen() que configuré por mi cuenta, me devuelve un array de bytes. Este array de bytes lo 			convierto a la clase InputStream usando su constructor ByteArrayInputStream() el cual, por suerte para mí, requiere de un array de bytes 			para ello.
+
+		Una vez tengo el InputStream creado simplemente añado la imagen al párrado correspondiente con su método addPicture().
+
+		Para identificar que campos son los más comunes en estos grafos, meto el método crearGrafo en un for loop e indico que el campo que contiene 		el número de veces en el que aparece un elemento del String[][] para guardarlo y compararlos entre sí y filtrar hasta quedarme con el que 			tenga más apariciones y lo guardo en un String para mostrarlo más tarde.
+
+
+	-crearGrafo(int)	
+		
+		Este método llama a la Clase Grafo del paquete del proyecto para llenarlo de datos.
+		
+		Aquí es donde discrimino el campo con el que quiera crear el grafo, acaba siendo una funcionalidad muy parecida en todos.
+		
+		Principalmente guardo en un String[] un campo de todos los registros, el que quiera mostrar. Ahora compruebo cuantas veces aparecen todos 			los tipos de ese campo que haya en la tabla principal, almaceno en un array bidimensional el número de veces que aparece el elemento y el 			nombre del elemento, este array lo devuelvo para que sea usado por la clase Grafo.
+
+
+	-recargarTabla()
+		
+		Simplemente realiza de nuevo la carga de todos los datos de la tabla por si ha habido una inserción, actualización o eliminación. Funciona 			igual que el método cargarTabla().
+
+
+	-genCod()	
+
+		Genera un código que no exista en la tabla para usarlo cómo identificador único de un registro.
+
+	
+	-elimRegis()
+		
+		Crea una conexión a la BBDD, y creo la query Delete empleando el sensor de registro seleccionado de la tabla y que me extraiga el código de 			ese registro para buscarlo y eliminarlo de la BBDD, empleo la variable contadora como %ROWCOUNT de nuevo como comprobación. Finalmente 				cierro conexión con la BBDD.
+
+
+	-cargarTabla()
+		
+		Creo la query de selección total (Select *), creo la conexión con la BBDD y preparo la query con ResultSet. Si encuentra registros entra el 			un bucle while y guarda en la posición correspondiente de donde encuentre el nombre de la columna indicado. Almaceno esto en mi modelo y se 			lo paso a la tabla.
+	
+		Utilizo DefaultTableCellRenderer para indicar que los registros deben posicionarse horizontalmente en el centro de la celda y mediante un 			for loop se lo paso a todas las columnas de mi tabla.
+
+
+	-modificarCambios()
+		
+		Este método recoge los campos del InternalFrame correspondiente y si estos son válidos procede.
+		
+		Creo la query Update de SQL con los campos como incógnitas, las cuales se especifican más adelante.
+		
+		Una vez creo la conexión y el PreparedStatement, seteo en las posiciones de los valores dependiendo de cómo los haya escrito con los valores 		específicos de los cambios a realizar.
+	
+		Vuelvo a emplear una variable que funciona como %ROWCOUNT para comprobar la ejecucción y cierro la conexión.
+
+		
+///FIN MÉTODOS///
+
+	Ahora incluiré apartados que considero relevantes.
+	
+	Especifiqué que si se cierra la pestaña, también se cierre la clase Grafo ya que van por separado y sino una se queda abierta.
+
+	Este propio documento se abre con una aplicación que yo mismo he programado.
+	
+	La tabla tiene sensores de click para habilitar la edición o eliminación del campo seleccionado.
+	
+	Si se quiere editar, recojo los datos del registro seleccionado y lo seteo en las cajas de texto, spinner, comboBox o JCalendar correspondiente.
+
+	Si se quieren guardar los campos se pincha en el botón "Guardar Cambios" y estos se actualizan en la BBDD y en la tabla mediante la invocación del 		método recargarTabla().
+
+	En el momento de introducir fechas compruebo que la fecha de inicio ocurre antes que la de fin para que no haya errores.
+
+	En el apartado de añadir registro, existe la opción de introducirlos mediante un documento TXT, si así se desea, este documento debe tener los 			campos de los valores divididos por comas y los registros por puntos y comas, sino fuera así no permite continuar. Si el patrón es correcto, se 		muestran en un JTextField y si se desea se le puede dar formato para identificar qué valores corresponden a qué campos. Una vex introducidos los 		datos, se habilita la pestaña de "Muestra", esta contiene una tabla con los datos a introducir y con su propio código único para que el usuario 		pueda ver cómo se verían esos datos en la tabla, si quiere proceder se guardarán estos nuevos registros, sino se desecharán.

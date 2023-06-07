@@ -2,7 +2,6 @@ package aplicaciones;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -14,9 +13,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,11 +45,16 @@ import javax.swing.event.CaretListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
+
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JTextField;
 import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 public class Padre extends JFrame {
 
@@ -56,70 +62,54 @@ public class Padre extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
-	private JPanel panel, panel_1;
+	private JPanel contentPane, panel, panel_1, barra_estado, panel_2, panel_3, panel_caracteres;
 	private JTextArea texto;
-	private JPanel barra_estado;
-	private JScrollPane scroll;
+	private JScrollPane scroll, scrollPane;
 	private String nombre_archivo = "Sin nombre.txt";
-	private JLabel dlinea;
+	private JLabel dlinea, guarda, dcolumn;
 	private JFileChooser ch;
 	private FileInputStream fis;
 	private JLabel codificasao_1;
 	private Color color;
-	private JLabel guarda;
 	private int guardado = 0;
 	private Font f = new Font("Arial", 0, 12);
-	private JComboBox<String> comboFuente;
-	private JComboBox<String> comboEstilo;
-	private JComboBox<String> comboTamano;
-	private JScrollPane scrollPane;
-	private JPanel panel_2;
-	private String cortado = "";
+	private JComboBox<String> comboFuente, comboTamano, comboEstilo;
+	private String cortado = "", arc, linea;
+	private String[] options = { "Guardar", "No guardar", "Cancelar" };;
 	private final UndoManager um0 = new UndoManager();
-	private JMenuItem pegar;
-	private JLabel dcolumn;
-	private JPanel panel_3;
+	private JMenuItem pegar, Mayusc, rehacer, deshacer, mcaracteres;
 	private JTextField tbuscar;
-	private JMenuItem rehacer;
-	private JMenuItem deshacer;
-	private JMenuItem mcaracteres;
-	private JPanel panel_caracteres;
-	private JButton b_unmedio;
-	private JButton b_c_circulo;
-	private JButton b_ñ_pequena;
-	private JButton b_ñ;
-	private JButton b_euro;
-	private JButton b_punto;
-	private JButton b_flechad;
-	private JButton b_flechai;
-	private JButton b_arroba;
-	private JButton b_cedilla;
-	private JButton b_cedilla_grande;
-	private JButton b_á_grande;
-	private JMenuItem Mayusc;
-	private JButton b_excl;
-	private JButton b_euro_1;
-	private JButton b_á_grande_1;
-	private JButton b_á_grande_2;
-	private JButton b_á_grande_3;
-	private JButton b_á_grande_4;
-	private JButton b_á_grande_5;
-	private JButton b_á_grande_6;
-	private JButton b_á_grande_7;
-	private JButton b_á_grande_8;
+	private JButton b_unmedio, b_c_circulo, b_ñ_pequena, b_ñ, b_euro, b_punto, b_flechad, b_flechai, b_arroba,
+			b_cedilla, b_cedilla_grande, b_á_grande, b_excl, b_euro_1, b_á_grande_1, b_á_grande_2, b_á_grande_3,
+			b_á_grande_4, b_á_grande_5, b_á_grande_6, b_á_grande_7, b_á_grande_8;
+	private FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos .txt", "txt");;
+	private FileWriter ficheroP;
+	private PrintWriter pwP;
+	private Scanner sc;
+	private File fc;
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		try {
+			UIManager.setLookAndFeel(new FlatLightLaf());
+		} catch (UnsupportedLookAndFeelException e1) {
+
+		}
+		UIManager.put("Button.arc", 999);
+		UIManager.put("Component.arc", 999);
+		UIManager.put("ProgressBar.arc", 999);
+		UIManager.put("TextComponent.arc", 999);
+		UIManager.put("Component.innerFocusWidth", 1);
+		UIManager.put("Button.innerFocusWidth", 1);
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Padre frame = new Padre();
+					Padre frame = new Padre("");
 					frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+
 				}
 			}
 		});
@@ -142,35 +132,33 @@ public class Padre extends JFrame {
 	}
 
 	private void guardarArchivo() {
-		JFileChooser jfguardar = new JFileChooser();// Creo un objeto de selector de archivos
-		jfguardar.setAcceptAllFileFilterUsed(false);// Le obligo a no poder usar otros filtros NO especificado
+		ch = new JFileChooser();// Creo un objeto de selector de archivos
+		ch.setAcceptAllFileFilterUsed(false);// Le obligo a no poder usar otros filtros NO especificado
 		// Filtro para solo .txt
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos .txt", "txt");// Creo el filtro el cual
-																								// SI quiero que use y
-																								// solo pueda ver
+		// SI quiero que use y
+		// solo pueda ver
 
-		jfguardar.setFileFilter(filter);// Le aplico el filtro
-		jfguardar.setSelectedFile(new File(nombre_archivo));// Esta linea me pone el nombre del archivo que este en el
-															// momento en el nombre del archivo al guardarlo
+		ch.setFileFilter(filtro);// Le aplico el filtro
+		ch.setSelectedFile(new File(nombre_archivo));// Esta linea me pone el nombre del archivo que este en el
+														// momento en el nombre del archivo al guardarlo
 
-		int p = jfguardar.showSaveDialog(null);// Me abre el menu de guardado
+		int p = ch.showSaveDialog(null);// Me abre el menu de guardado
 
 		if (p == JFileChooser.APPROVE_OPTION) {// Si ha hecho el guardado entra aqui
 			if (!nombre_archivo.equals("Sin nombre")) {
-				nombre_archivo = jfguardar.getSelectedFile().getName();// Me coge el nombre que haya puesto
+				nombre_archivo = ch.getSelectedFile().getName();// Me coge el nombre que haya puesto
 				// En el caso de que el usuario haya renombrado el archivo, se sobreescribe el
 				// nombre de por defecto
 			}
 			try {
-				String arc = jfguardar.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";// Me permite recoger la
-																								// direccion exacta del
-																								// archivo para usarla
-																								// mas tarde
+				arc = ch.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";// Me permite recoger la
+																				// direccion exacta del
+																				// archivo para usarla
+																				// mas tarde
 
-				File fc = new File(arc);// Creo el archivo en esa ruta guardada para poder comprobar si existe ANTES de
-										// guardarlo
+				fc = new File(arc);// Creo el archivo en esa ruta guardada para poder comprobar si existe ANTES de
+									// guardarlo
 				if (fc.exists()) {// En el caso de que exista
-					String[] options = { "Sobreescribir", "Renombrar y guardar", "Cancelar" };
 
 					int z = JOptionPane.showOptionDialog(null,
 							"Ya existe el archivo " + nombre_archivo + "\n¿Que desea hacer?", "Bloc de Jorge",
@@ -178,11 +166,11 @@ public class Padre extends JFrame {
 					// Le propongo las opciones que tiene disponible en el caso de que exista el
 					// documento
 					if (z == 0) {// Si elije sobreescribir
-						FileWriter ficheroP = new FileWriter(// Me guarda el txt
+						ficheroP = new FileWriter(// Me guarda el txt
 								arc, false);// Me sobreescribe al especificar "false" y me usa la direccion guardada de
 											// antes para ponerlo en esa ruta
 
-						PrintWriter pwP = new PrintWriter(ficheroP);
+						pwP = new PrintWriter(ficheroP);
 						ficheroP.write(texto.getText());
 						pwP.println();
 						pwP.flush();
@@ -191,8 +179,8 @@ public class Padre extends JFrame {
 						ficheroP.close();// Escritura finalizada
 						guardado = 1;// Si se ha escrito quiere decir que se ha guardado, uso esto mas tarde para que
 										// no pregunte que quiere hacer con el documente
-						nombre_archivo = jfguardar.getSelectedFile().getName();
-						
+						nombre_archivo = ch.getSelectedFile().getName();
+
 						setTitle(nombre_archivo + " - Bloc de Jorge");
 					} else if (z == 1) {// Si elije renombrar y guardar
 
@@ -200,25 +188,25 @@ public class Padre extends JFrame {
 								.showInputDialog("Porfavor, introduzca el nuevo nombre del archivo:");// Pido el nombre
 																										// para
 																										// guardarlo
-						String arc2 = jfguardar.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";// lo mismo de
-																										// comprobacion
+						arc = ch.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";// lo mismo de
+																						// comprobacion
 
-						File ck2 = new File(arc2);// Otra comprobacion por si acaso
-						if (ck2.exists()) {
-							while (ck2.exists()) {// De este bucle no sale a no ser que introduzca un nombre que no
+						fc = new File(arc);// Otra comprobacion por si acaso
+						if (fc.exists()) {
+							while (fc.exists()) {// De este bucle no sale a no ser que introduzca un nombre que no
 													// exista en esa ruta
 								nombre_archivo = JOptionPane
 										.showInputDialog("Ese nombre ya está en uso. Porfavor, introduzca otro");
-								arc2 = jfguardar.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";
-								ck2 = new File(arc2);
+								arc = ch.getCurrentDirectory() + "\\" + nombre_archivo + ".txt";
+								fc = new File(arc);
 
 							}
 						}
 
-						FileWriter ficheroP = new FileWriter(// Me escribe el nuevo documento
-								arc2, false);
+						ficheroP = new FileWriter(// Me escribe el nuevo documento
+								arc, false);
 
-						PrintWriter pwP = new PrintWriter(ficheroP);
+						pwP = new PrintWriter(ficheroP);
 						ficheroP.write(texto.getText());
 						pwP.println();
 						pwP.flush();
@@ -230,9 +218,9 @@ public class Padre extends JFrame {
 					}
 
 				} else {// En el caso de que no exista ese documento en la ruta
-					FileWriter ficheroP = new FileWriter(arc, true);
+					ficheroP = new FileWriter(arc, true);
 
-					PrintWriter pwP = new PrintWriter(ficheroP);
+					pwP = new PrintWriter(ficheroP);
 					ficheroP.write(texto.getText());
 					pwP.println();
 					pwP.flush();
@@ -259,6 +247,34 @@ public class Padre extends JFrame {
 	/**
 	 * Create the frame.
 	 */
+	private void cargarDocu() {
+		String texto = "";
+		fc = new File("codigo_documentado_editor_texto.txt");
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(fc));
+		} catch (FileNotFoundException e2) {
+
+		}
+		try {
+			linea = br.readLine();
+		} catch (IOException e1) {
+			linea = "";
+		}
+		while (linea != null) {
+			texto += (linea + "\n");
+			try {
+				linea = br.readLine();
+			} catch (IOException e1) {
+
+			}
+		}
+		new Padre(texto).setVisible(true);
+		nombre_archivo = "Documentación del Bloc de Jorge";
+		guardado = 1;
+		guarda.setText("Sí");
+	}
+
 	private void abrirArchivo() {
 		// Antes de abrirlo, miro si hay algo escrito y si es así pregunto si quiere
 		// conservarlo
@@ -266,12 +282,12 @@ public class Padre extends JFrame {
 			ch = new JFileChooser();
 			texto.setText(null);
 
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos .txt", "txt");// Filtro para mas
-																									// tarde de solo
-																									// .txt
+			// Filtro para mas
+			// tarde de solo
+			// .txt
 
 			ch.setAcceptAllFileFilterUsed(false);// Niego filtros que no sean aplicados
-			ch.setFileFilter(filter);// Le obligo a usar mi filtro
+			ch.setFileFilter(filtro);// Le obligo a usar mi filtro
 
 			ch.setVisible(true);
 
@@ -284,18 +300,17 @@ public class Padre extends JFrame {
 				File file = new File(ch.getSelectedFile().toString());// Me creo el archivo con ese nombre y extension
 
 				try {
-					@SuppressWarnings("resource")
-					Scanner sc = new Scanner(file);// Le paso el archivo al escaner
-					String data = "";
+					sc = new Scanner(file);// Le paso el archivo al escaner
+					linea = "";
 					while (sc.hasNextLine()) {
-						data+= sc.nextLine() + "\n";// Esto hace que por cada salto de linea del documento, lo
-															// muestre en el areaText
-					// Me inserta la fila de texto correspondiente en la siguiente fila
+						linea += sc.nextLine() + "\n";// Esto hace que por cada salto de linea del documento, lo
+														// muestre en el areaText
+						// Me inserta la fila de texto correspondiente en la siguiente fila
 					}
-					texto.insert(data, 0);
+					texto.insert(linea, 0);
 					cargarBarraEstado();// Actualiza la barra de estado para los nuevos datos
 					guardado = 1;// Si el archivo se acaba de abrir es porque esta guardado
-
+					sc.close();
 				} catch (FileNotFoundException e1) {
 					// Errores...
 				}
@@ -303,7 +318,6 @@ public class Padre extends JFrame {
 			}
 		} else {// En el caso de que haya texto en el textArea y vamos a intentar abrir otro
 				// documento
-			String[] options = { "Guardar", "No guardar", "Cancelar" };
 
 			int z = JOptionPane.showOptionDialog(null, "¿Quiere guardar los cambios de " + nombre_archivo + "?",
 					"Bloc de Jorge", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options,
@@ -311,28 +325,25 @@ public class Padre extends JFrame {
 			if (z == 0) {// Si se quiere guardar le inicio el metodo del guardado
 				guardarArchivo();
 			} else if (z == 1) {// Si quiere No guardarlo pues simplemente hago la apertura normal
-				JFileChooser ch = new JFileChooser();
-
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos .txt", "txt");
+				ch = new JFileChooser();
 
 				ch.setAcceptAllFileFilterUsed(false);
-				ch.setFileFilter(filter);
+				ch.setFileFilter(filtro);
 				ch.setVisible(true);
 
 				int returnVal = ch.showOpenDialog(null);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					File file = new File(ch.getSelectedFile().toString());
+					fc = new File(ch.getSelectedFile().toString());
 					try {
-						@SuppressWarnings("resource")
-						Scanner sc = new Scanner(file);
+						sc = new Scanner(fc);
 						texto.setText(null);
 						while (sc.hasNextLine()) {
-							String data = sc.nextLine();
-							texto.insert(data, 0);
+							linea = sc.nextLine();
+							texto.insert(linea, 0);
 
 						}
 						dlinea.setText(Integer.toString(texto.getLineCount()));
-
+						sc.close();
 					} catch (FileNotFoundException e1) {
 
 					}
@@ -353,7 +364,6 @@ public class Padre extends JFrame {
 															// guardado
 			dispose();
 		} else {// De lo contrario
-			String[] options = { "Guardar", "No guardar", "Cancelar" };
 			int x = JOptionPane.showOptionDialog(null, "¿Quiere guardar los cambios de " + nombre_archivo + "?",
 					"Bloc de Jorge", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options,
 					options[0]);// Pregunto...
@@ -383,16 +393,15 @@ public class Padre extends JFrame {
 
 				if (texto.getText().isBlank()) {// Si no hay nada escrito hace uno nuevo y ya
 					dispose();
-					new Padre().setVisible(true);
+					new Padre("").setVisible(true);
 				} else {// De lo contrario
-					String[] options = { "Guardar", "No guardar", "Cancelar" };
 
 					int x = JOptionPane.showOptionDialog(null, "¿Quiere guardar los cambios de " + nombre_archivo + "?",
 							"Bloc de Jorge", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options,
 							options[0]);// Pregunto...
 					if (x == 1) {// Si no quiere guardar lo que esta escrito
 						dispose();
-						new Padre().setVisible(true);
+						new Padre("").setVisible(true);
 					} else if (x == 0) {// Si quiere guardarlo invoco al metodo de guardar
 						guardarArchivo();
 
@@ -705,12 +714,24 @@ public class Padre extends JFrame {
 		JMenuItem verayuda = new JMenuItem("Ver ayuda      Alt+V");
 		verayuda.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				File docu = new File("src/aplicaciones/codigo_documentado_editor_texto.txt");
-				try {
-					Desktop.getDesktop().open(docu);
-				} catch (IOException e1) {
+				if (texto.getText().isBlank() || guardado == 1) {// En el caso de que no haya texto escrito o el
+					dispose(); // documento este
+					cargarDocu();
+				} else {// De lo contrario
+					int x = JOptionPane.showOptionDialog(null, "¿Quiere guardar los cambios de " + nombre_archivo + "?",
+							"Bloc de Jorge", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options,
+							options[0]);// Pregunto...
+					if (x == 1) {// Si no quiere guardar lo cierro
+						dispose();
+						cargarDocu();
+					} else if (x == 0) {// Si quiere guardar recurro al metodo de guardado
 
+						guardarArchivo();
+						dispose();
+						cargarDocu();
+					}
 				}
+
 			}
 		});
 		verayuda.setMnemonic('V');
@@ -834,12 +855,12 @@ public class Padre extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if (!tbuscar.getText().isEmpty()) {
 
-					String s = texto.getText();
-					if (!s.contains(tbuscar.getText())) {
+					linea = texto.getText();
+					if (!linea.contains(tbuscar.getText())) {
 						JOptionPane.showMessageDialog(null, "No se ha encontrado: \"" + tbuscar.getText() + "\"");
 					} else {
 
-						int n = s.indexOf(tbuscar.getText());
+						int n = linea.indexOf(tbuscar.getText());
 						texto.requestFocus();
 						texto.select(n, n + tbuscar.getText().length());
 					}
@@ -863,12 +884,12 @@ public class Padre extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if (!tbuscar.getText().isEmpty() && !treemplazar.getText().isEmpty()) {
 
-					String s = texto.getText();
-					if (!s.contains(tbuscar.getText())) {
+					linea = texto.getText();
+					if (!linea.contains(tbuscar.getText())) {
 						JOptionPane.showMessageDialog(null, "No se ha encontrado: \"" + tbuscar.getText() + "\"");
 					} else {
 
-						int n = s.indexOf(tbuscar.getText());
+						int n = linea.indexOf(tbuscar.getText());
 						texto.requestFocus();
 						texto.select(n, n + tbuscar.getText().length());
 						texto.replaceSelection(treemplazar.getText());
@@ -883,7 +904,7 @@ public class Padre extends JFrame {
 		panel_3.add(btnNewButton_1);
 	}
 
-	public Padre() {
+	public Padre(String s) {
 		setIconImage(Toolkit.getDefaultToolkit().getImage(Padre.class.getResource("/multimedia/Icono_Bloc_Jorge.png")));
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);// Que no se cierre al cerrar xd
 		setBounds(100, 100, 450, 300);
@@ -1143,7 +1164,7 @@ public class Padre extends JFrame {
 		});
 		b_á_grande_6.setFont(new Font("Dialog", Font.BOLD, 11));
 		panel_caracteres.add(b_á_grande_6);
-		
+
 		b_á_grande_7 = new JButton("Ó");
 		b_á_grande_7.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -1157,7 +1178,7 @@ public class Padre extends JFrame {
 		});
 		b_á_grande_7.setFont(new Font("Dialog", Font.BOLD, 11));
 		panel_caracteres.add(b_á_grande_7);
-		
+
 		b_á_grande_8 = new JButton("ó");
 		b_á_grande_8.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -1369,6 +1390,14 @@ public class Padre extends JFrame {
 		});
 		texto.getDocument().addUndoableEditListener(um0);// Un escuchador que me permite detecatar cambios de los que
 															// puedes retroceder o avanzar
+
+		try {
+			texto.append(s);
+			guardado = 1;
+			guarda.setText("Sí");
+		} catch (Exception q) {
+
+		}
 
 	}
 

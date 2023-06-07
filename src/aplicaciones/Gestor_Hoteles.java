@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Iterator;
+import java.util.Calendar;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -19,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.toedter.calendar.JDateChooser;
@@ -33,11 +34,19 @@ import java.awt.HeadlessException;
 
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
@@ -55,9 +64,28 @@ import javax.swing.border.LineBorder;
 import java.awt.Color;
 import javax.swing.JPasswordField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+
 import java.awt.Toolkit;
 import javax.swing.ImageIcon;
 import javax.swing.ScrollPaneConstants;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.util.Units;
+import org.apache.poi.wp.usermodel.HeaderFooterType;
+import org.apache.poi.xwpf.usermodel.Document;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHeader;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 public class Gestor_Hoteles extends JFrame {
 
@@ -66,7 +94,7 @@ public class Gestor_Hoteles extends JFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
-	private JTable tabla;
+	private static JTable tabla;
 	private DefaultTableModel modelo = new DefaultTableModel() {
 
 		private static final long serialVersionUID = 1L;
@@ -80,49 +108,36 @@ public class Gestor_Hoteles extends JFrame {
 			super.fireTableDataChanged();
 		}
 	};
-	private JButton beditar;
-	private JInternalFrame editar;
+	private JButton beditar, bcancelar, belim, bcan, bnuevo, bguardar_1, bcancelar_1, bcargar, bfomr, bno, bconf,
+			bgrafo, bhotel, bimprimir;
+	private JInternalFrame editar, elim, anadir, frameGrafos;
 	private JScrollPane scrollPane;
-	private JTextField nombre;
-	private JComboBox<String> comboServ;
-	private JSpinner spinner;
-	private JDateChooser fecha_ini;
-	private JDateChooser fecha_fin;
-	private JButton bcancelar;
+	private JTextField nombre, tnombre_1, tcod;
+	private JComboBox<String> comboServ, comboServ_1;
+	private JSpinner spinner, spinner_1;
+	private JDateChooser fecha_ini, fecha_fin, fecha_fin_1, fecha_ini_1;
 	private String arr[];
-	private JButton belim;
-	private JButton bcan;
-	private JInternalFrame elim;
 	private final String CONTRA = "admin";
 	private JPasswordField tcontra;
 	private int i = 0;
-	private JButton bnuevo;
-	private JInternalFrame anadir;
-	private JPanel panel_1;
-	private JLabel l1_1;
-	private JLabel l2_1;
-	private JLabel lblNDePersonas_1;
-	private JLabel lblFechaInicio_1;
-	private JLabel lblFechaDeFin_1;
-	private JTextField tnombre_1;
-	private JComboBox<String> comboServ_1;
-	private JSpinner spinner_1;
-	private JDateChooser fecha_ini_1;
-	private JDateChooser fecha_fin_1;
-	private JButton bguardar_1;
-	private JButton bcancelar_1;
-	private JLabel l1_2;
-	private JTextField tcod;
-	private JButton bcargar;
+	private static int p;
+	private JPanel panel_1, pan_regis;
+	private JLabel l2_1, l1_1, lblNDePersonas_1, lblFechaInicio_1, lblFechaDeFin_1, l1_2;
 	private JTextArea most;
-	private JPanel pan_regis;
-	private JButton bfomr;
 	private DefaultTableModel dtm;
 	private Gestor_Conexion conect;
 	private JTable tabla_regis;
-	private JButton bno;
-	private JButton bconf;
-	private String registros[][];
+	private static String registros[][];
+	private String reg[];
+	private static Grafo demo;
+	private Connection con;
+	private static String s;
+	private static JFileChooser ch;
+	private static FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos .docx", "docx");
+	private static InputStream in;
+	private Statement st;
+	private ResultSet rs;
+	private PreparedStatement pst;
 
 	/**
 	 * Launch the application.
@@ -134,7 +149,7 @@ public class Gestor_Hoteles extends JFrame {
 					Gestor_Hoteles frame = new Gestor_Hoteles();
 					frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+
 				}
 			}
 		});
@@ -151,19 +166,18 @@ public class Gestor_Hoteles extends JFrame {
 		modelo.addColumn("Numero de personas");
 		modelo.addColumn("Fecha de inicio");
 		modelo.addColumn("Fecha de fin");
-
 		tabla.setModel(modelo);
 	}
 
 	private void insertarRegis(String[][] arr) {
 		try {
-			Connection con = null;
-			Gestor_Conexion conect = new Gestor_Conexion();
+			con = null;
+			conect = new Gestor_Conexion();
 			con = conect.getConnection();
-			String s = "";
-			int n = 0;
+			s = "";
+			p = 0;
 			String sql = "insert into Hotel (Codigo,Nombre_del_Hotel,Servicios,Numero_de_personas,Dia_Uno,Dia_Fin) values (?,?,?,?,?,?)";
-			PreparedStatement pst = con.prepareStatement(sql);
+			pst = con.prepareStatement(sql);
 
 			for (int i = 0; i < arr.length; i++) {
 
@@ -172,10 +186,10 @@ public class Gestor_Hoteles extends JFrame {
 					pst.setString(j + 1, s);
 
 				}
-				n = pst.executeUpdate();
+				p = pst.executeUpdate();
 
 			}
-			if (n > 0) {
+			if (p > 0) {
 				JOptionPane.showMessageDialog(null, "DATOS GUARDADOS CORRECTAMENTE");
 				recargarTabla();
 				anadir.dispose();
@@ -187,22 +201,372 @@ public class Gestor_Hoteles extends JFrame {
 			JOptionPane.showMessageDialog(null, "LOS DATOS NO HAN SIDO GUARDADOS CORRECTAMENTE" + l, "Error",
 					JOptionPane.ERROR_MESSAGE);
 
+		} finally {
+			try {
+				con.close();
+
+			} catch (SQLException e) {
+
+			}
 		}
 
+	}
+
+	@SuppressWarnings("deprecation")
+	public static void imprimirJtable(JTable jTable, String header, String footer) {
+
+		try (XWPFDocument doc = new XWPFDocument()) {
+			Calendar cal = Calendar.getInstance();
+			ch = new JFileChooser();
+			ch.setAcceptAllFileFilterUsed(false);
+
+			ch.setFileFilter(filter);
+
+			p = ch.showSaveDialog(null);
+
+			if (p == JFileChooser.APPROVE_OPTION) {
+				///////////////
+				XWPFHeader cabecera = doc.createHeader(HeaderFooterType.DEFAULT);
+				cabecera.createParagraph().createRun().setText("Gestoría de Jorgeles TM");
+				XWPFFooter pie = doc.createFooter(HeaderFooterType.DEFAULT);
+
+				pie.createParagraph().createRun().setText("Registros de Jorgeles TM");
+
+				XWPFParagraph p7 = doc.createParagraph();
+				p7.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun r1 = p7.createRun(); // Texto dentro del p1
+				r1.setBold(true);
+				r1.setItalic(false);
+				r1.setFontSize(22);
+				r1.setFontFamily("Dialog");
+				r1.setText("Informe de datos del Gestor de Jorgeles");
+
+				XWPFTable table = doc.createTable();
+
+				XWPFTableRow fila1 = table.getRow(0); // Obligatorio ponerlo así
+				fila1.getCell(0).setText("Codigo");
+
+				// Obligatorio ponerlo así
+				for (int i = 1; i < tabla.getColumnCount(); i++) {
+
+					fila1.addNewTableCell().setText(tabla.getColumnName(i));
+
+				}
+
+				for (int j = 0; j < tabla.getRowCount(); j++) {
+					XWPFTableRow filaRow = table.createRow();// Para que me haga una fila por registro lo meto dentro y
+																// C'est Fini Funciona
+
+					for (int i = 0; i < tabla.getColumnCount(); i++) {
+						if (i == 0) {// Si es cero por alguna razon hay que sacarlo fuera
+							filaRow.getCell(0).setText(tabla.getValueAt(j, i).toString());
+						} else
+							filaRow.getCell(i).setText(tabla.getValueAt(j, i).toString());
+					}
+				}
+
+				XWPFParagraph p6 = doc.createParagraph();
+				XWPFRun r0 = p6.createRun(); // Texto dentro del p1
+				r0.setBold(true);
+				r0.setItalic(false);
+				r0.setFontSize(21);
+				r0.setFontFamily("Dialog");
+				p6.setPageBreak(true);
+				r0.setText("Grafos de datos");
+				p6.setAlignment(ParagraphAlignment.CENTER);
+
+				XWPFParagraph p5 = doc.createParagraph();
+				XWPFRun r2 = p5.createRun(); // Texto dentro del p1
+				r2.setBold(true);
+				r2.setItalic(false);
+				r2.setFontSize(18);
+				r2.setFontFamily("Dialog");
+				r2.setText("¿Qué épocas tienen más reservas?");
+				p5.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun r5 = p5.createRun();
+				
+				demo = new Grafo("Comparación", "", crearGrafo(4));// String[][]
+				
+				in = new ByteArrayInputStream(demo.convertirImagen());
+
+				try {
+					r5.addPicture(in, Document.PICTURE_TYPE_PNG, demo.toString(),
+
+							Units.toEMU(350), Units.toEMU(300));
+
+				} catch (InvalidFormatException e) {
+
+				}
+
+				XWPFParagraph m9 = doc.createParagraph();
+				m9.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun m11 = m9.createRun();
+				m11.setBold(false);
+				m11.setItalic(false);
+				m11.setFontSize(14);
+				m11.setFontFamily("Dialog");
+				String Servicio = "";
+				String fechaStr = cal.get(Calendar.DATE) + "/" + (cal.get(Calendar.MARCH) + 1) + "/"
+						+ cal.get(Calendar.YEAR);
+
+				m11.setText(
+						"Estos datos se basan en la agrupación del campo 'Fecha de inicio', contando cuántas veces aparece cada mes de reserva en los registros del Gestor de Jorgeles TM");
+				m11.addBreak();
+				m11.addBreak();
+				p = crearGrafo(4).length;
+				Servicio = "";
+				
+				int x = Integer.parseInt(crearGrafo(4)[0][1].toString());
+
+				for (int i = 1; i < p; i++) {
+					int y = Integer.parseInt(crearGrafo(4)[i][1].toString());
+
+					if (y > x) {
+						x = y;
+						Servicio = crearGrafo(4)[i][0].toString();
+					} else {
+						Servicio = crearGrafo(4)[i][0].toString();
+					}
+
+				}
+
+				m11.setText("Este grafo muestra que el mes '" + Servicio
+						+ "' es el mes con más reservas. Estos datos se han generado en " + fechaStr);
+
+				XWPFParagraph p8 = doc.createParagraph();
+				p8.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun r7 = p8.createRun();
+				r7.setBold(true);
+				r7.setItalic(false);
+				r7.setFontSize(16);
+				r7.setFontFamily("Dialog");
+				r7.setText("¿Qué servicios tienen más éxito?");
+				demo = new Grafo("Comparación", "", crearGrafo(2));// String[][]
+				in = new ByteArrayInputStream(demo.convertirImagen());
+
+				try {
+					r7.addPicture(in, Document.PICTURE_TYPE_PNG, demo.toString(),
+
+							Units.toEMU(350), Units.toEMU(300));
+
+				} catch (InvalidFormatException e) {
+
+				}
+				r7.addBreak();
+
+				p = crearGrafo(2).length;
+
+				x = Integer.parseInt(crearGrafo(2)[0][1].toString());
+
+				for (int i = 1; i < p; i++) {
+					int y = Integer.parseInt(crearGrafo(2)[i][1].toString());
+
+					if (y > x) {
+						x = y;
+						Servicio = crearGrafo(2)[i][0].toString();
+					} else {
+						Servicio = crearGrafo(2)[i][0].toString();
+					}
+
+				}
+				// Añadiendo que muestre el servicio/hotel/epoca mas exitosa, sacas de el
+				// array[][] de Strgin que devuelve crearGrafo()
+
+				XWPFParagraph m1 = doc.createParagraph();
+				m1.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun m2 = m1.createRun();
+				m2.setBold(false);
+				m2.setItalic(false);
+				m2.setFontSize(14);
+				m2.setFontFamily("Dialog");
+
+				m2.setText(
+						"Estos datos se basan en la agrupación del campo 'Servicios', contando cuántas veces aparece cada tipo de servicio en los registros del Gestor de Jorgeles TM");
+				m2.addBreak();
+				m2.addBreak();
+
+				m2.setText("Este grafo muestra que el servicio '" + Servicio
+						+ "' es el servicio con más éxito. Estos datos se han generado en " + fechaStr);
+
+				XWPFParagraph p9 = doc.createParagraph();
+				p9.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun r8 = p9.createRun();
+				r8.setBold(true);
+				r8.setItalic(false);
+				r8.setFontSize(18);
+				r8.setFontFamily("Dialog");
+				r8.setText("¿Qué hoteles tienen más éxito?");
+				demo = new Grafo("Comparación", "", crearGrafo(1));// String[][]
+				in = new ByteArrayInputStream(demo.convertirImagen());
+
+				try {
+					r8.addPicture(in, Document.PICTURE_TYPE_PNG, demo.toString(),
+
+							Units.toEMU(350), Units.toEMU(300));
+
+				} catch (InvalidFormatException e) {
+
+				}
+
+				p = crearGrafo(1).length;
+				x = Integer.parseInt(crearGrafo(1)[0][1].toString());
+				Servicio = crearGrafo(1)[x][0].toString();
+				for (int i = 1; i < p; i++) {
+					int y = Integer.parseInt(crearGrafo(1)[i][1].toString());
+
+					if (y >= x) {
+						x = y;
+						Servicio = crearGrafo(1)[i][0].toString();
+					} else {
+
+					}
+
+				}
+				// Añadiendo que muestre el servicio/hotel/epoca mas exitosa, sacas de el
+				// array[][] de Strgin que devuelve crearGrafo()
+
+				XWPFParagraph m3 = doc.createParagraph();
+				m3.setAlignment(ParagraphAlignment.CENTER);
+				XWPFRun m4 = m3.createRun();
+				m4.setBold(false);
+				m4.setItalic(false);
+				m4.setFontSize(14);
+				m4.setFontFamily("Dialog");
+
+				m4.setText(
+						"Estos datos se basan en la agrupación del campo 'Hoteles', contando cuántas veces aparece cada hotel en los registros del Gestor de Jorgeles TM");
+				m4.addBreak();
+				m4.addBreak();
+
+				m4.setText("Este grafo muestra que el hotel '" + Servicio
+						+ "' es el hotel con más éxito. Estos datos se han generado en " + fechaStr);
+
+				///////////////
+				String n = ch.getSelectedFile().getName();
+				while (n.contains(".docx")) {
+					n = n.replace(".docx", "");// En el caso de que el documento contenga en su propio nombre la
+												// extension .docx esta se elimina y mas tarde se añade
+				}
+				s = ch.getCurrentDirectory().toString().concat("\\" + n + ".docx");
+				try (FileOutputStream out = new FileOutputStream(s)) {
+
+					doc.write(out);
+					Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " +
+
+							s);
+
+				} catch (IOException e) {
+
+				}
+			}
+		} catch (IOException e1) {
+
+		}
+
+	}
+
+	private static String[][] crearGrafo(int campo) {
+		
+		registros = new String[tabla.getRowCount()][2];
+		String nombre[] = new String[tabla.getRowCount()];
+		p = 0;
+		
+		if (campo != 4) {
+
+			for (int i = 0; i < tabla.getRowCount(); i++) {
+				nombre[i] = tabla.getValueAt(i, campo).toString();
+			}
+
+			for (int i = 0; i < registros.length; i++) {
+				p = 0;
+				for (int j = 0; j < registros.length; j++) {
+
+					if (tabla.getValueAt(j, campo).toString().equals(nombre[i])) {
+						p++;
+					}
+
+				}
+				registros[i][0] = nombre[i];
+				registros[i][1] = Integer.toString(p);
+
+			}
+
+		} else {
+			for (int i = 0; i < nombre.length; i++) {
+				nombre[i] = tabla.getValueAt(i, campo).toString().substring(3, 5);
+			}
+			for (int i = 0; i < registros.length; i++) {
+				p = 0;
+				for (int j = 0; j < registros.length; j++) {
+
+					if (tabla.getValueAt(j, campo).toString().substring(3, 5).equals(nombre[i])) {
+						p++;
+					}
+
+				}
+				registros[i][0] = nombre[i];
+				registros[i][1] = Integer.toString(p);
+				if (campo == 4) {
+					switch (nombre[i]) {
+					case "01":
+						registros[i][0] = "Enero";
+						break;
+					case "02":
+						registros[i][0] = "Febrero";
+						break;
+
+					case "03":
+						registros[i][0] = "Marzo";
+						break;
+					case "04":
+						registros[i][0] = "Abril";
+						break;
+					case "05":
+						registros[i][0] = "Mayo";
+						break;
+					case "06":
+						registros[i][0] = "Junio";
+						break;
+					case "07":
+						registros[i][0] = "Julio";
+						break;
+					case "08":
+						registros[i][0] = "Agosto";
+						break;
+					case "09":
+						registros[i][0] = "Septiembre";
+						break;
+					case "10":
+						registros[i][0] = "Octubre";
+						break;
+					case "11":
+						registros[i][0] = "Noviembre";
+						break;
+					case "12":
+						registros[i][0] = "Diciembre";
+						break;
+					}
+
+				}
+
+			}
+		}
+
+		return registros;
 	}
 
 	private void recargarTabla() {
 		try {
 
-			String reg[] = new String[100];// Solo me mostrara los 100 primero regisytos
-			String sql = "select * from Hotel ";
+			reg = new String[400];// Solo me mostrara los 400 primero regisytos
+			s = "select * from Hotel ";
 
-			Connection con = null;
+			con = null;
 			conect = new Gestor_Conexion();// Lo conecto a mi conexion de clientes
 			con = conect.getConnection();
 
-			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery(sql);
+			st = con.createStatement();
+			rs = st.executeQuery(s);
 			modelo = new DefaultTableModel() {
 
 				private static final long serialVersionUID = 1L;
@@ -237,39 +601,47 @@ public class Gestor_Hoteles extends JFrame {
 			modelo.fireTableStructureChanged();
 			modelo.fireTableDataChanged();
 			tabla.clearSelection();
+			DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
+			tcr.setHorizontalAlignment(SwingConstants.CENTER);
+			for (int i = 0; i < tabla.getColumnCount(); i++) {
+				tabla.getColumnModel().getColumn(i).setCellRenderer(tcr);
+			}
 
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, "NO SE PUEDEN VISUALIZAR LOS DATOS DE LA TABLA", "Error",
 					JOptionPane.ERROR_MESSAGE);
+		} finally {
+			try {
+				con.close();
+			} catch (SQLException e) {
+
+			}
 		}
 
 	}
 
 	private String genCod() {
-		String s = "a-";
-		String arr[] = new String[tabla.getRowCount()];
+		s = "a-";
 
-		String n=tabla.getValueAt(tabla.getRowCount()-1, 0).toString();
-		int m =Integer.parseInt( n.substring(2));
-		s = s.concat(Integer.toString(m+1));
-		
-		
-		
+		String n = tabla.getValueAt(tabla.getRowCount() - 1, 0).toString();
+		int m = Integer.parseInt(n.substring(2));
+		s = s.concat(Integer.toString(m + 1));
+
 		return s;
 	}
 
 	private void elimRegis() {
 		try {
-			Connection con = null;
+			con = null;
 			conect = new Gestor_Conexion();
 			con = conect.getConnection();
-			String sql = "delete from Hotel where Codigo like ?";// Le
-																	// concateno
-																	// el
+			s = "delete from Hotel where Codigo like ?";// Le
+														// concateno
+														// el
 			// valor q quiero
 
 			// eliminar
-			PreparedStatement pst = con.prepareStatement(sql);// Ejecuto query
+			pst = con.prepareStatement(s);// Ejecuto query
 			pst.setString(1, tabla.getValueAt(tabla.getSelectedRow(), 0).toString());
 
 			int n = pst.executeUpdate();
@@ -286,6 +658,12 @@ public class Gestor_Hoteles extends JFrame {
 			tabla.clearSelection();
 		} catch (SQLException ex) {
 			JOptionPane.showMessageDialog(null, "DATOS NO ELIMINADOS CORRECTAMENTE" + ex.getMessage());
+		} finally {
+			try {
+				con.close();
+			} catch (SQLException e) {
+
+			}
 		}
 	}
 
@@ -293,16 +671,16 @@ public class Gestor_Hoteles extends JFrame {
 
 		try {
 
-			String reg[] = new String[100];// Solo me mostrara los 100 primero regisytos
-			String sql = "select * from Hotel ";
+			reg = new String[100];// Solo me mostrara los 100 primero regisytos
+			s = "select * from Hotel ";
 
 			;
-			Connection con = null;
+			con = null;
 			conect = new Gestor_Conexion();// Lo conecto a mi conexion de clientes
 			con = conect.getConnection();
 
-			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery(sql);
+			st = con.createStatement();
+			rs = st.executeQuery(s);
 
 			while (rs.next()) {
 				reg[0] = rs.getString("Codigo");
@@ -319,16 +697,26 @@ public class Gestor_Hoteles extends JFrame {
 				// Ya funciona
 			}
 			tabla.setModel(modelo);// Y aqui se munestran
-			
-
+			DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
+			tcr.setHorizontalAlignment(SwingConstants.CENTER);
+			for (int i = 0; i < tabla.getColumnCount(); i++) {
+				tabla.getColumnModel().getColumn(i).setCellRenderer(tcr);
+			}
 		} catch (SQLException e) {
 			JOptionPane.showMessageDialog(null, "NO SE PUEDEN VISUALIZAR LOS DATOS DE LA TABLA", "Error",
 					JOptionPane.ERROR_MESSAGE);
+		} finally {
+			try {
+				con.close();
+			} catch (SQLException e) {
+
+			}
 		}
 	}
 
 	private void modificarCambios() {
 		try {
+			
 			SimpleDateFormat sf = new SimpleDateFormat("dd/MM/yyyy");
 			java.util.Date dini = fecha_ini.getDate();
 			String ini = sf.format(dini);
@@ -336,15 +724,13 @@ public class Gestor_Hoteles extends JFrame {
 			java.util.Date dfin = fecha_fin.getDate();
 			String fin = sf.format(dfin);
 
-			String sql = "UPDATE Hotel " + "SET Nombre_del_Hotel=?" + ", Servicios =? " + ", Numero_de_personas = ?,"
+			s = "UPDATE Hotel " + "SET Nombre_del_Hotel=?" + ", Servicios =? " + ", Numero_de_personas = ?,"
 					+ " Dia_Uno = ?" + ",Dia_Fin =? " + "WHERE Codigo like ?";
-			Connection con = null;
+			con = null;
 			conect = new Gestor_Conexion();// Lo conecto a mi conexion de clientes
 			con = conect.getConnection();
 
-			PreparedStatement pst;
-
-			pst = con.prepareStatement(sql);
+			pst = con.prepareStatement(s);
 
 			pst.setString(1, nombre.getText().toString());
 			pst.setString(2, comboServ.getSelectedItem().toString());
@@ -365,16 +751,82 @@ public class Gestor_Hoteles extends JFrame {
 			JOptionPane.showMessageDialog(null, "NO SE PUEDEN ACTUALIZAR LOS DATOS DE LA TABLA", "Error",
 					JOptionPane.ERROR_MESSAGE);
 
+		} finally {
+			try {
+				con.close();
+			} catch (SQLException e) {
+
+			}
 		}
 	}
 
 	public Gestor_Hoteles() {
+
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				try {
+					demo.dispose();
+				} catch (Exception p) {
+
+				}
+			}
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				try {
+					demo.dispose();
+				} catch (Exception s2) {
+
+				}
+			}
+		});
 		setIconImage(
 				Toolkit.getDefaultToolkit().getImage(Gestor_Hoteles.class.getResource("/multimedia/gestoricon.png")));
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setBounds(100, 15, 980, 706);
+		setBounds(100, 0, 980, 706);
 		setResizable(false);
 		setTitle("Gestor de Jorgeles - Administrador");
+
+		JMenuBar menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+
+		JMenu mnNewMenu = new JMenu("Ayuda");
+		mnNewMenu.setFont(new Font("Dialog", Font.BOLD, 12));
+		mnNewMenu.setMnemonic('a');
+		menuBar.add(mnNewMenu);
+
+		JMenuItem mntmNewMenuItem = new JMenuItem("Ver documentación");
+		mntmNewMenuItem.setMnemonic('V');
+		mntmNewMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String texto = "";
+				File docu = new File("docu_gestor.txt");
+				BufferedReader br = null;
+				try {
+					br = new BufferedReader(new FileReader(docu));
+				} catch (FileNotFoundException e2) {
+
+				}
+				String linea = "";
+				try {
+					linea = br.readLine();
+				} catch (IOException e1) {
+
+				}
+				while (linea != null) {
+					texto += (linea + "\n");
+					try {
+						linea = br.readLine();
+					} catch (IOException e1) {
+
+					}
+				}
+				new Padre(texto).setVisible(true);
+			}
+		});
+		mntmNewMenuItem.setFont(new Font("Dialog", Font.BOLD, 12));
+		mnNewMenu.add(mntmNewMenuItem);
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(219, 117, 108));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -387,7 +839,7 @@ public class Gestor_Hoteles extends JFrame {
 		scrollPane.setBounds(41, 37, 886, 226);
 		contentPane.add(scrollPane);
 
-				tabla = new JTable();
+		tabla = new JTable();
 		tabla.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -415,6 +867,7 @@ public class Gestor_Hoteles extends JFrame {
 				int row = tabla.getSelectedRow();
 
 				arr = new String[tabla.getColumnCount()];
+				
 				for (int i = 0; i < tabla.getColumnCount(); i++) {
 					arr[i] = tabla.getValueAt(row, i).toString();
 				}
@@ -435,7 +888,7 @@ public class Gestor_Hoteles extends JFrame {
 					fecha = sdf.parse(arr[4]);
 					fin = sdf.parse(arr[5]);
 				} catch (ParseException e1) {
-					e1.printStackTrace();
+
 				}
 				fecha_ini.setDate(fecha);
 				fecha_fin.setDate(fin);
@@ -443,7 +896,7 @@ public class Gestor_Hoteles extends JFrame {
 			}
 		});
 		beditar.setFont(new Font("Dialog", Font.BOLD, 12));
-		beditar.setBounds(54, 395, 89, 23);
+		beditar.setBounds(54, 324, 89, 23);
 		beditar.requestFocus();
 		contentPane.add(beditar);
 
@@ -463,7 +916,7 @@ public class Gestor_Hoteles extends JFrame {
 		});
 		belim.setFont(new Font("Dialog", Font.BOLD, 12));
 		belim.setEnabled(false);
-		belim.setBounds(54, 478, 89, 23);
+		belim.setBounds(54, 404, 89, 23);
 		contentPane.add(belim);
 
 		bnuevo = new JButton("Añadir");
@@ -486,7 +939,7 @@ public class Gestor_Hoteles extends JFrame {
 			}
 		});
 		bnuevo.setFont(new Font("Dialog", Font.BOLD, 12));
-		bnuevo.setBounds(54, 573, 89, 23);
+		bnuevo.setBounds(54, 471, 89, 23);
 		contentPane.add(bnuevo);
 
 		JPanel panel_2 = new JPanel();
@@ -546,6 +999,20 @@ public class Gestor_Hoteles extends JFrame {
 		tnombre_1.setFont(new Font("Dialog", Font.BOLD, 12));
 		tnombre_1.setColumns(10);
 		tnombre_1.setBounds(133, 36, 96, 41);
+		tnombre_1.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent ke) {
+				char c = ke.getKeyChar();
+				if (Character.isLetter(c) || Character.isWhitespace(c)) {
+
+				} else {
+					getToolkit().beep();
+					ke.consume();
+
+				}
+
+			}
+		});
 		panel_1.add(tnombre_1);
 
 		comboServ_1 = new JComboBox<String>();
@@ -609,44 +1076,46 @@ public class Gestor_Hoteles extends JFrame {
 				} else {
 					spinner_1.setBorder(null);
 				}
+				try {
+					if (!(ini.compareTo(fin) >= 0) && (!tnombre_1.getText().isEmpty() || m.matches())
+							&& !(Integer.parseInt(spinner_1.getValue().toString()) <= 0)) {
+						try {
+							SimpleDateFormat sf = new SimpleDateFormat("dd/MM/yyyy");
+							java.util.Date dini = fecha_ini_1.getDate();
+							String ini_1 = sf.format(dini);
 
-				if (!(ini.compareTo(fin) >= 0) && (!tnombre_1.getText().isEmpty() || m.matches())
-						&& !(Integer.parseInt(spinner_1.getValue().toString()) <= 0)) {
-					try {
-						SimpleDateFormat sf = new SimpleDateFormat("dd/MM/yyyy");
-						java.util.Date dini = fecha_ini_1.getDate();
-						String ini_1 = sf.format(dini);
+							java.util.Date dfin = fecha_fin_1.getDate();
+							String fin_1 = sf.format(dfin);
 
-						java.util.Date dfin = fecha_fin_1.getDate();
-						String fin_1 = sf.format(dfin);
+							Connection con = null;
+							conect = new Gestor_Conexion();
+							con = conect.getConnection();
 
-						Connection con = null;
-						Gestor_Conexion conect = new Gestor_Conexion();
-						con = conect.getConnection();
+							s = "insert into Hotel (Codigo,Nombre_del_Hotel,Servicios,Numero_de_personas,Dia_Uno,Dia_Fin) values (?,?,?,?,?,?)";
+							pst = con.prepareStatement(s);
 
-						String sql = "insert into Hotel (Codigo,Nombre_del_Hotel,Servicios,Numero_de_personas,Dia_Uno,Dia_Fin) values (?,?,?,?,?,?)";
-						PreparedStatement pst = con.prepareStatement(sql);
-
-						pst.setString(1, tcod.getText());
-						pst.setString(2, tnombre_1.getText());
-						pst.setString(3, comboServ_1.getSelectedItem().toString());
-						pst.setString(4, spinner_1.getValue().toString());
-						pst.setString(5, ini_1);
-						pst.setString(6, fin_1);
-						int n = pst.executeUpdate();
-						if (n > 0) {
-							JOptionPane.showMessageDialog(null, "DATOS GUARDADOS CORRECTAMENTE");
-							recargarTabla();
-							anadir.dispose();
-							tabla.clearSelection();
-						} else {
-							JOptionPane.showMessageDialog(null, "DATOS NO GUARDADOS CORRECTAMENTE");
+							pst.setString(1, tcod.getText());
+							pst.setString(2, tnombre_1.getText());
+							pst.setString(3, comboServ_1.getSelectedItem().toString());
+							pst.setString(4, spinner_1.getValue().toString());
+							pst.setString(5, ini_1);
+							pst.setString(6, fin_1);
+							int n = pst.executeUpdate();
+							if (n > 0) {
+								JOptionPane.showMessageDialog(null, "DATOS GUARDADOS CORRECTAMENTE");
+								recargarTabla();
+								anadir.dispose();
+								tabla.clearSelection();
+							} else {
+								JOptionPane.showMessageDialog(null, "DATOS NO GUARDADOS CORRECTAMENTE");
+							}
+						} catch (SQLException | HeadlessException l) {
+							JOptionPane.showMessageDialog(null, "LOS DATOS NO HAN SIDO GUARDADOS CORRECTAMENTE" + e,
+									"Error", JOptionPane.ERROR_MESSAGE);
 						}
-					} catch (SQLException | HeadlessException l) {
-						JOptionPane.showMessageDialog(null, "LOS DATOS NO HAN SIDO GUARDADOS CORRECTAMENTE" + e,
-								"Error", JOptionPane.ERROR_MESSAGE);
 					}
 
+				} catch (Exception s) {
 				}
 			}
 		});
@@ -682,6 +1151,7 @@ public class Gestor_Hoteles extends JFrame {
 
 		bcargar = new JButton("Cargar registro...");
 		bcargar.addActionListener(new ActionListener() {
+			
 			public void actionPerformed(ActionEvent e) {
 				JInternalFrame internalFrame = new JInternalFrame("Registro Externo");
 				internalFrame.setBounds(84, 30, 629, 287);
@@ -721,18 +1191,18 @@ public class Gestor_Hoteles extends JFrame {
 				JButton btnNewButton = new JButton("Explorar...");
 				btnNewButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						JFileChooser regis = new JFileChooser();
-						FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos .txt", "txt");
-						regis.setAcceptAllFileFilterUsed(false);
-						regis.setFileFilter(filter);
+						ch = new JFileChooser();
+						ch.setAcceptAllFileFilterUsed(false);
+						FileNameExtensionFilter f = new FileNameExtensionFilter("Archivos txt", "txt");
+						ch.setFileFilter(f);
 
-						regis.setVisible(true);
+						ch.setVisible(true);
 
-						int returnVal = regis.showOpenDialog(null);
+						int returnVal = ch.showOpenDialog(null);
 						if (returnVal == JFileChooser.APPROVE_OPTION) {
 							String texto = "";
 							StringBuffer sb = new StringBuffer();
-							File file = new File(regis.getSelectedFile().toString());
+							File file = new File(ch.getSelectedFile().toString());
 
 							try {
 								@SuppressWarnings("resource")
@@ -754,12 +1224,13 @@ public class Gestor_Hoteles extends JFrame {
 								// Los valores de columnas son separados por , mientras que los
 								// registros por ;
 								boolean permitir = true;
-								String s = "";
+
 								while (st.hasMoreTokens()) {
 									s = st.nextToken().toString() + ";";
 									comp = p.matcher(s.substring(0, s.indexOf(";")));
 									if (!comp.matches()) {
-										JOptionPane.showMessageDialog(null, "El patrón del documento es erróneo");
+										most.append(
+												"El patrón del documento es erróneo debe contener comas entre los valores y puntos y coma entre registros.");
 										permitir = false;
 										break;
 
@@ -767,10 +1238,11 @@ public class Gestor_Hoteles extends JFrame {
 								}
 
 								if (permitir) {
+
 									most.append(texto);
 									bfomr.setEnabled(true);
 									tabula.addTab("Muestra", null, pan_regis, null);
-									
+
 								}
 
 								// AQUI TAB NUEVA
@@ -811,13 +1283,14 @@ public class Gestor_Hoteles extends JFrame {
 						texto = texto.replace("\t", ",");
 						texto = texto.replace("\n", ";");
 						texto = texto.replaceFirst(";", "");
+						
 						StringTokenizer st = new StringTokenizer(texto, ";");
 						registros = new String[st.countTokens()][6];
 
 						int n = st.countTokens();
 						int d = 0;
 						for (int i = 0; i < n; i++) {
-							String s = st.nextToken();
+							s = st.nextToken();
 							StringTokenizer data = new StringTokenizer(s, ",");
 							d = data.countTokens();
 							for (int j = 0; j < d + 1; j++) {
@@ -834,7 +1307,6 @@ public class Gestor_Hoteles extends JFrame {
 						dtm = new DefaultTableModel();
 
 						dtm.addColumn("Codigo");
-
 						dtm.addColumn("Hotel");
 						dtm.addColumn("Servicios");
 						dtm.addColumn("Personas");
@@ -977,7 +1449,7 @@ public class Gestor_Hoteles extends JFrame {
 		JButton bcontra_elim = new JButton("Eliminar");
 		bcontra_elim.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String s = "";
+				s = "";
 				try {
 					for (int i = 0; i < tcontra.getPassword().toString().length(); i++) {
 						s += tcontra.getPassword()[i];
@@ -1086,6 +1558,20 @@ public class Gestor_Hoteles extends JFrame {
 		nombre.setFont(new Font("Dialog", Font.BOLD, 12));
 		nombre.setBounds(10, 42, 96, 20);
 		panel_3.add(nombre);
+		nombre.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent ke) {
+				char c = ke.getKeyChar();
+				if (Character.isLetter(c) || Character.isWhitespace(c)) {
+
+				} else {
+					getToolkit().beep();
+					ke.consume();
+
+				}
+
+			}
+		});
 		nombre.setColumns(10);
 
 		comboServ = new JComboBox<String>();
@@ -1150,6 +1636,151 @@ public class Gestor_Hoteles extends JFrame {
 		bcancelar.setFont(new Font("Dialog", Font.BOLD, 12));
 		bcancelar.setBounds(253, 93, 139, 23);
 		panel_3.add(bcancelar);
+
+		frameGrafos = new JInternalFrame("Seleccione un Grafo");
+		frameGrafos.setBounds(36, 11, 639, 124);
+		frameGrafos.setResizable(true);
+		frameGrafos.getContentPane().setLayout(null);
+		frameGrafos.setFrameIcon(new ImageIcon(Gestor_Hoteles.class.getResource("/multimedia/grafo_ico.png")));
+		panel_2.add(frameGrafos);
+		frameGrafos.setVisible(false);
+
+		frameGrafos.addInternalFrameListener(new InternalFrameAdapter() {
+			@Override
+			public void internalFrameClosing(InternalFrameEvent e) {
+				bnuevo.setEnabled(true);
+				tabla.clearSelection();
+				tabla.setRowSelectionAllowed(true);
+				try {
+					demo.dispose();
+				} catch (Exception v) {
+
+				}
+
+			}
+		});
+
+		bhotel = new JButton("Hoteles");
+		bhotel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					demo.dispose();
+
+				} catch (Exception b) {
+
+				}
+				demo = new Grafo("Comparación", "¿Qué hoteles tienen más éxito?", crearGrafo(1));// String[][]
+																									// array con
+				// Texto de la
+				// ocurrencia y veces
+				// que ocurra
+				demo.pack();
+				demo.setVisible(true);
+				demo.setBounds(500, 400, 500, 270);
+
+			}
+		});
+		bhotel.setForeground(new Color(0, 0, 255));
+		bhotel.setFont(new Font("Dialog", Font.BOLD, 12));
+		bhotel.setBounds(30, 35, 89, 23);
+		frameGrafos.getContentPane().add(bhotel);
+
+		JButton btnServicios = new JButton("Servicios");
+		btnServicios.setForeground(Color.BLUE);
+		btnServicios.setFont(new Font("Dialog", Font.BOLD, 12));
+		btnServicios.setBounds(171, 36, 89, 23);
+		frameGrafos.getContentPane().add(btnServicios);
+		btnServicios.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					demo.dispose();
+
+				} catch (Exception b) {
+
+				}
+				demo = new Grafo("Comparación", "¿Qué servicios tienen más éxito?", crearGrafo(2));// String[][]
+																									// array con
+				// Texto de la
+				// ocurrencia y veces
+				// que ocurra
+				demo.pack();
+				demo.setVisible(true);
+				demo.setBounds(500, 400, 500, 270);
+
+			}
+		});
+
+		JButton btnNPersonas = new JButton("Épocas");
+		btnNPersonas.setForeground(Color.BLUE);
+		btnNPersonas.setFont(new Font("Dialog", Font.BOLD, 12));
+		btnNPersonas.setBounds(314, 36, 108, 23);
+		frameGrafos.getContentPane().add(btnNPersonas);
+
+		btnNPersonas.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					demo.dispose();
+
+				} catch (Exception b) {
+
+				}
+				demo = new Grafo("Comparación", "¿Qué época tiene más reservas?", crearGrafo(4));// String[][]
+				// array con
+				// Texto de la
+				// ocurrencia y veces
+				// que ocurra
+				demo.pack();
+				demo.setVisible(true);
+				demo.setBounds(500, 400, 500, 270);
+
+			}
+		});
+
+		JButton btnSalir = new JButton("SALIR");
+		btnSalir.setForeground(new Color(255, 0, 0));
+		btnSalir.setFont(new Font("Dialog", Font.BOLD, 12));
+		btnSalir.setBounds(538, 22, 81, 48);
+		frameGrafos.getContentPane().add(btnSalir);
+		btnSalir.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				bnuevo.setEnabled(true);
+				frameGrafos.dispose();
+
+				try {
+					demo.dispose();
+				} catch (Exception v) {
+
+				}
+
+			}
+		});
+
+		bgrafo = new JButton("Grafos");
+
+		bgrafo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frameGrafos.setVisible(true);
+				bnuevo.setEnabled(false);
+				belim.setEnabled(false);
+				beditar.setEnabled(false);
+			}
+		});
+		bgrafo.setForeground(new Color(0, 0, 255));
+		bgrafo.setFont(new Font("Dialog", Font.BOLD, 12));
+		bgrafo.setBounds(54, 554, 89, 23);
+		contentPane.add(bgrafo);
+
+		bimprimir = new JButton("Imprimir");
+		bimprimir.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				imprimirJtable(tabla, "Registros de reservas", "Jorgeles TM");
+			}
+		});
+		bimprimir.setForeground(new Color(128, 0, 255));
+		bimprimir.setFont(new Font("Dialog", Font.BOLD, 12));
+		bimprimir.setBounds(54, 612, 89, 23);
+		contentPane.add(bimprimir);
 
 		crearColumnas();
 		cargarTabla();

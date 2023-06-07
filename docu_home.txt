@@ -1,0 +1,61 @@
+//DOCUMENTACION DE LA PANTALLA DE INICIO//
+
+Es la clase que contiene al resto de clases por lo cual es quien porta el
+LookandFeel para que todas lo puedan heredar.
+
+
+//MÉTODOS//
+
+	-myWalk()
+	
+		Me permite devolver un camino a un nodo de mi JTree para poder 
+		representarlo como seleccionado más adelante.
+		
+		Recoge el modelo del JTree correspondiente junto a dos nodos hijos 
+		del nodo raíz comparando nodo a nodo hasta encontrar con los que
+		se llamen como hayamos querido y devuelve un array de Object con 
+		el que poder definir el JTreePath más adelante.
+		
+	-Home
+	
+		El método principal de la clase, a partir de este explicaré qué hace
+		cada elemento de la misma.
+		
+		
+//ELEMENTOS & FUNCIONALIDADES//
+
+La barra de tareas inferior es un JToolBar que contiene JButtons para cada
+funcionalidad junto a un JLabel descriptivo.
+
+Los iconos del escritorio son botones con los métodos setContentAreaFilled(false)
+y setBorderPainted(false) para que aparezcan sin decoracion y solo se muestre 
+el icono que he puesto y así dar la sensación de un icono más que de un
+botón tradicional de WB.
+
+Una vez abramos uno de estos iconos se iniciaría la app correspondiente y 
+al mismo tiempo un icono en el toolBar inferior con el icono y nombre de la
+app seleccionada correspondiente, con este icono podemos devolver el focus
+a la app que se haya minimizado o haya perdido el focus.
+
+El apartado de Configuración, permite alternar entre Pantalla Completa o
+Pantalla No Completa, he consguido esta alternancia de frames jugando con
+el metodo isUndecorated() y setUndecorated(), si te fijas en el código,
+he tenido que hacer que la aplicacion entera se "reinicie", esto es 
+obligatorio porqué no se puede cambiar el método setUndecorated() a true/false
+si la aplicación está siendo ejecutada.
+
+También hay otra opción en Configuración que te permite cambiar el tamaño de 
+los iconos tanto del Explorador de Jorgivos como del escritorio, cambiando
+por iconos de distinto tamaño y cambiando la posición Y de las labels 
+correspondientes dan una sensación de realmente cambiar el tamaño.
+
+El apartado de Configuración también permite personalizar el estilo de la
+app como se desee; Temática oscura o Temática clara.
+
+Pasando a la otra aplicación integrada en Home, encontramos al Explorador de
+Jorgives, es un JSplitPane en el cual en la parte de la izquierda hay un
+JTree con el directorio del Explorador ya seleccionado, he podido hacer esto
+con el método myWalk() definido antes. También incluí un documento txt 
+el cual redirige a este archivo jajaja, lo curioso de esto último es que
+uso mi propio Bloc de Jorge integrado y lo muestro usadno el lector de
+BuferedReader y leyendo.

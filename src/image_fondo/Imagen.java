@@ -21,4 +21,9 @@ public class Imagen extends JPanel {
 		g.drawImage(fondo.getImage(), 0, 0, ancho, alto, null);
 		super.paintComponent(g);
 	}
+	//bg1 = new Imagen("/multimedia/back.png", (int) d.getWidth(), (int) d.getHeight());
+	//bg1.setOpaque(false);
+	//bg1.setLayout(null);
+	//getContentPane().add(bg1);
+	
 }

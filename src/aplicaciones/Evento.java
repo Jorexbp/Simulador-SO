@@ -92,7 +92,6 @@ public class Evento extends JFrame {
 		item.setEndTime(e.getDate());
 		item.setHeaderText(events[0]);
 		item.getStyle().setBrush(brushes[dayIndex]);
-		
 
 		// Create the recurrence pattern.
 		recurrence = new Recurrence();
